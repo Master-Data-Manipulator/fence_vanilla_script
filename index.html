@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Draw a polygon and calculate its area</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.3.1/mapbox-gl.css" rel="stylesheet">
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.3.1/mapbox-gl.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    #map {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 100%;
+    }
+  </style>
+</head>
+
+<body>
+    <button type="button" id="button" onclick={doneEdit()}>Done Editing</button>
+  <style>
+    .calculation-box {
+      height: 50px;
+      width: 150px;
+      position: absolute;
+      bottom: 40px;
+      left: 10px;
+      background-color: rgba(255, 255, 255, 0.9);
+      padding: 15px;
+      text-align: center;
+    }
+
+    #button{
+        color:black;
+        position: absolute;
+        top: 60px;
+        right: 60px;
+        z-index: 100;
+        min-width: 50px;
+    }
+
+    p {
+      font-family: 'Open Sans';
+      margin: 0;
+      font-size: 13px;
+    }
+  </style>
+
+  <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.2.2/mapbox-gl-draw.js"></script>
+  <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.2.2/mapbox-gl-draw.css"
+    type="text/css">
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.min.js"></script>
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.css">
+  <div id="map"></div>
+    <div id="root"></div>
+  <div class="calculation-box">
+    <p>Perimeter in feet.</p>
+    <div id="calculated-area"></div>
+  </div>
+
+  <script id="script">
+      var button = document.querySelector('#button');
+      var last = [];
+      var isEditing = true;
+
+
+    mapboxgl.accessToken = 'pk.eyJ1IjoidXNlcjIxMjEiLCJhIjoiY2tyMnpsczNlMWNhdjJ3bGRxM3lwNThkZiJ9.tpdGQruKyjF2go3gsXvHxA';
+    var map = new mapboxgl.Map({
+      container: 'map', // container ID
+      style: 'mapbox://styles/mapbox/satellite-v9', // style URL
+      center: [-90.079252, 30.376989], // starting position [lng, lat]
+      zoom: 12 // starting zoom
+    });
+
+    map.addControl(
+        new MapboxGeocoder({
+          accessToken: mapboxgl.accessToken,
+          mapboxgl: mapboxgl,
+          zoom: 19,
+        })
+      );
+
+    var draw = new MapboxDraw({
+      displayControlsDefault: false,
+      // Select which mapbox-gl-draw control buttons to add to the map.
+      controls: {
+        polygon: true,
+        trash: true,
+        line_string: true,
+      },
+      // Set mapbox-gl-draw to draw by default.
+      // The user does not have to click the polygon control button first.
+      defaultMode: 'draw_line_string'
+    });
+    map.addControl(draw);
+
+    map.on('draw.create', updateArea);
+    map.on('draw.delete', updateArea);
+    map.on('draw.update', updateArea);
+
+    function doneEdit(e) {
+        if(isEditing){
+             isEditing = !isEditing;
+             button.innerHTML = 'Edit'; 
+             draw.changeMode('simple_select');
+            } else { 
+                isEditing = !isEditing;
+                button.innerHTML = 'Done Editing'; 
+        console.log('doneEdit');
+        const features = draw.getAll().features;
+        console.log(features[features.length - 1].id);
+        draw.changeMode('direct_select', { featureId: features[features.length-1].id });
+    }}
+
+    function updateArea(e) {
+      var data = draw.getAll();
+      var answer = document.getElementById('calculated-area');
+      if (data.features.length > 0) {
+        var area = turf.length(data, { units: "miles" });
+        // Restrict the area to 2 decimal points.
+        var rounded_area = Math.round((area * 5280.0) * 10) / 10; 
+        answer.innerHTML =
+          '<p><strong>' +
+          rounded_area +
+          '</strong></p><p>feet.</p>';
+      } else {
+        answer.innerHTML = '';
+        if (e.type !== 'draw.delete')
+          alert('');
+      }
+    }
+  </script>
+
+</body>
+
+</html>
