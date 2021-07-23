@@ -248,7 +248,7 @@
         }
 
         function lineButton() { draw.changeMode("draw_line_string"); checkMode()}
-        function polygonButton() { draw.changeMode("draw_polygon"); }
+        function polygonButton() { draw.changeMode("draw_polygon"); checkMode()}
         function undoButton() { console.log('undo'); }
         function deleteButton() {
             const features = draw.getAll().features;
