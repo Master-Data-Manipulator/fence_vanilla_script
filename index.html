@@ -200,7 +200,10 @@
         map.on("draw.delete", updateArea);
         map.on("draw.update", updateArea);
 
-        map.on('click', function(){ 
+        map.on('click', checkMode);
+        
+        
+        function checkMode(){ 
          const mode = draw.getMode();
          if(mode == 'simple_select'){
              isEditing = false;
@@ -209,7 +212,7 @@
              isEditing = true;
              editButton.innerHTML = "Done Editing";
          }
-        })
+        }
 
         function doneEdit(e) {
             console.log(draw.getMode());
@@ -244,7 +247,7 @@
             }
         }
 
-        function lineButton() { draw.changeMode("draw_line_string"); }
+        function lineButton() { draw.changeMode("draw_line_string"); checkMode()}
         function polygonButton() { draw.changeMode("draw_polygon"); }
         function undoButton() { console.log('undo'); }
         function deleteButton() {
