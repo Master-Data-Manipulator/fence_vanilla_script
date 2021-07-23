@@ -1,131 +1,270 @@
 <!DOCTYPE html>
 <html>
-  <head>
+
+<head>
     <meta charset="utf-8" />
     <title>Fence Distance</title>
     <link rel="stylesheet" href="styles.css" />
-    <meta
-      name="viewport"
-      content="initial-scale=1,maximum-scale=1,user-scalable=no"
-    />
-    <link
-      href="https://api.mapbox.com/mapbox-gl-js/v2.3.1/mapbox-gl.css"
-      rel="stylesheet"
-    />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.3.1/mapbox-gl.css" rel="stylesheet" />
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.3.1/mapbox-gl.js"></script>
-  </head>
+</head>
 
-  <body>
+<body>
     <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
     <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.2.2/mapbox-gl-draw.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.2.2/mapbox-gl-draw.css"
-      type="text/css"
-    />
-    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.min.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.css"
-    />
+    <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.2.2/mapbox-gl-draw.css"
+        type="text/css" />
+    <script
+        src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.min.js"></script>
+    <link rel="stylesheet"
+        href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.css" />
+    <div class="button-container">
+        <button type="button" id="editButton" onclick="{doneEdit()}">
+            Done Editing
+        </button>
+        <button type="button" id="zoomOutButton" onclick="{resetZoom()}">
+            Reset Zoom
+        </button>
+    </div>
 
-    <button type="button" id="editButton" onclick="{doneEdit()}">
-      Done Editing
-    </button>
     <div id="map">
-      <div id="geocoder" class="geocoder"></div>
+        <div id="geocoder" class="geocoder"></div>
     </div>
 
     <div class="calculation-box">
-      <p>Perimeter in feet.</p>
-      <div id="calculated-area"></div>
+        <p>Perimeter in feet.</p>
+        <div id="calculated-area"><p><strong>0</strong></p></div>
     </div>
 
     <div class="bottom-bar">
-      <button id="line-button" onclick="{lineButton()}">Line</button>
-      <button id="polygon-button" onclick="{polygonButton()}"">Polygon</button>
-      <button id="undo-button" onclick="{undoButton()}">Undo</button>
-      <button id="delete-button" onclick="{deleteButton()}">Delete</button>
+        <button id="line-button" onclick="{lineButton()}">Line</button>
+        <button id="polygon-button" onclick="{polygonButton()}"">Polygon</button>
+      <button id=" undo-button" onclick="{undoButton()}">Undo</button>
+        <button id="delete-button" onclick="{deleteButton()}">Delete</button>
     </div>
 
     <script id="script">
-      var editButton = document.querySelector("#editButton");
-    //   var lineButton = document.querySelector("#lineButton");
-    //   var polygonButton = document.querySelector("#polygonButton");
-    //   var undoButton = document.querySelector("#undoButton");
-    //   var deleteButton = document.querySelector("#deleteButton");
-      var last = [];
-      var isEditing = true;
+        var editButton = document.querySelector("#editButton");
+        //   var lineButton = document.querySelector("#lineButton");
+        //   var polygonButton = document.querySelector("#polygonButton");
+        //   var undoButton = document.querySelector("#undoButton");
+        //   var deleteButton = document.querySelector("#deleteButton");
+        var last = [];
+        var isEditing = true;
 
-      mapboxgl.accessToken =
-        "pk.eyJ1IjoidXNlcjIxMjEiLCJhIjoiY2tyMnpsczNlMWNhdjJ3bGRxM3lwNThkZiJ9.tpdGQruKyjF2go3gsXvHxA";
-      var map = new mapboxgl.Map({
-        container: "map", // container ID
-        style: "mapbox://styles/mapbox/satellite-v9", // style URL
-        center: [-90.079252, 30.376989], // starting position [lng, lat]
-        zoom: 12, // starting zoom
-      });
+        mapboxgl.accessToken =
+            "pk.eyJ1IjoidXNlcjIxMjEiLCJhIjoiY2tyMnpsczNlMWNhdjJ3bGRxM3lwNThkZiJ9.tpdGQruKyjF2go3gsXvHxA";
+        var map = new mapboxgl.Map({
+            container: "map", // container ID
+            style: "mapbox://styles/mapbox/satellite-v9", // style URL
+            center: [-90.079252, 30.376989], // starting position [lng, lat]
+            zoom: 12, // starting zoom
+        });
 
-      const geocoder = new MapboxGeocoder({
-        accessToken: mapboxgl.accessToken,
-        mapboxgl: mapboxgl,
-        zoom: 19,
-      });
 
-      var draw = new MapboxDraw({
-        displayControlsDefault: false,
-        // Select which mapbox-gl-draw control buttons to add to the map.
-        // Set mapbox-gl-draw to draw by default.
-        // The user does not have to click the polygon control button first.
-        defaultMode: "draw_line_string",
-      });
-      map.addControl(draw);
+        const geocoder = new MapboxGeocoder({
+            accessToken: mapboxgl.accessToken,
+            mapboxgl: mapboxgl,
+            countries: 'US',
+            zoom: 19,
+        });
 
-      map.on("draw.create", updateArea);
-      map.on("draw.delete", updateArea);
-      map.on("draw.update", updateArea);
+        geocoder.on('result', function () { document.getElementById("geocoder").style.display = "none" });
 
-      function doneEdit(e) {
-        if (isEditing) {
-          isEditing = !isEditing;
-          editButton.innerHTML = "Edit";
-          draw.changeMode("simple_select");
-        } else {
-          isEditing = !isEditing;
-          editButton.innerHTML = "Done Editing";
-          console.log("doneEdit");
-          const features = draw.getAll().features;
-          console.log(features[features.length - 1].id);
-          draw.changeMode("direct_select", {
-            featureId: features[features.length - 1].id,
-          });
+        var draw = new MapboxDraw({
+            displayControlsDefault: false,
+            styles: [
+    {
+        "id": "gl-draw-line",
+        "type": "line",
+        "filter": ["all", ["==", "$type", "LineString"], ["!=", "mode", "static"]],
+        "layout": {
+          "line-cap": "round",
+          "line-join": "round"
+        },
+        "paint": {
+          "line-color": "#0935e6",
+          "line-width": 2
         }
+    },
+    // polygon fill
+    {
+      "id": "gl-draw-polygon-fill",
+      "type": "fill",
+      "filter": ["all", ["==", "$type", "Polygon"], ["!=", "mode", "static"]],
+      "paint": {
+        "fill-color": "#D20C0C",
+        "fill-outline-color": "#D20C0C",
+        "fill-opacity": 0.1
       }
+    },
+    // polygon mid points
+    {
+    'id': 'gl-draw-polygon-midpoint',
+    'type': 'circle',
+    'filter': ['all',
+      ['==', '$type', 'Point'],
+      ['==', 'meta', 'midpoint']],
+    'paint': {
+      'circle-radius': 3,
+      'circle-color': '#fbb03b'
+    }},
+    // polygon outline stroke
+    // This doesn't style the first edge of the polygon, which uses the line stroke styling instead
+    {
+      "id": "gl-draw-polygon-stroke-active",
+      "type": "line",
+      "filter": ["all", ["==", "$type", "Polygon"], ["!=", "mode", "static"]],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#D20C0C",
+        "line-dasharray": [0.2, 2],
+        "line-width": 2
+      }
+    },
+    // vertex point halos
+    {
+      "id": "gl-draw-polygon-and-line-vertex-halo-active",
+      "type": "circle",
+      "filter": ["all", ["==", "meta", "vertex"], ["==", "$type", "Point"], ["!=", "mode", "static"]],
+      "paint": {
+        "circle-radius": 5,
+        "circle-color": "#24d909"
+      }
+    },
+    // vertex points
+    {
+      "id": "gl-draw-polygon-and-line-vertex-active",
+      "type": "circle",
+      "filter": ["all", ["==", "meta", "vertex"], ["==", "$type", "Point"], ["!=", "mode", "static"]],
+      "paint": {
+        "circle-radius": 3,
+        "circle-color": "#ed11db",
+      }
+    },
 
-      function updateArea(e) {
-        var data = draw.getAll();
-        var answer = document.getElementById("calculated-area");
-        if (data.features.length > 0) {
-          var area = turf.length(data, { units: "miles" });
-          // Restrict the area to 2 decimal points.
-          var rounded_area = Math.round(area * 5280.0 * 10) / 10;
-          answer.innerHTML =
-            "<p><strong>" + rounded_area + "</strong></p><p>feet.</p>";
-        } else {
-          answer.innerHTML = "";
-          if (e.type !== "draw.delete") alert("");
+    // INACTIVE (static, already drawn)
+    // line stroke
+    {
+        "id": "gl-draw-line-static",
+        "type": "line",
+        "filter": ["all", ["==", "$type", "LineString"], ["==", "mode", "static"]],
+        "layout": {
+          "line-cap": "round",
+          "line-join": "round"
+        },
+        "paint": {
+          "line-color": "#000",
+          "line-width": 3
         }
+    },
+    // polygon fill
+    {
+      "id": "gl-draw-polygon-fill-static",
+      "type": "fill",
+      "filter": ["all", ["==", "$type", "Polygon"], ["==", "mode", "static"]],
+      "paint": {
+        "fill-color": "#000",
+        "fill-outline-color": "#000",
+        "fill-opacity": 0.1
       }
+    },
+    // polygon outline
+    {
+      "id": "gl-draw-polygon-stroke-static",
+      "type": "line",
+      "filter": ["all", ["==", "$type", "Polygon"], ["==", "mode", "static"]],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#000",
+        "line-width": 3
+      }
+    }
+  ],
 
-      function lineButton() {draw.changeMode("draw_line_string");}
-      function polygonButton() {draw.changeMode("draw_polygon");}
-      function undoButton() {console.log('undo');}
-      function deleteButton() {
-          const features = draw.getAll().features;
-          draw.delete(features[features.length - 1].id)}
+            // Select which mapbox-gl-draw control buttons to add to the map.
+            // Set mapbox-gl-draw to draw by default.
+            // The user does not have to click the polygon control button first.
+            defaultMode: "draw_line_string",
+        });
+        map.addControl(draw);
+
+        map.on("draw.create", updateArea);
+        map.on("draw.delete", updateArea);
+        map.on("draw.update", updateArea);
+
+        map.on('click', function(){ 
+         const mode = draw.getMode();
+         if(mode == 'simple_select'){
+             isEditing = false;
+              editButton.innerHTML = "Edit";
+         } else{
+             isEditing = true;
+             editButton.innerHTML = "Done Editing";
+         }
+        })
+
+        function doneEdit(e) {
+            console.log(draw.getMode());
+            if (isEditing) {
+                isEditing = !isEditing;
+                editButton.innerHTML = "Edit";
+                draw.changeMode("simple_select");
+            } else {
+                isEditing = !isEditing;
+                editButton.innerHTML = "Done Editing";
+                console.log("doneEdit");
+                const features = draw.getAll().features;
+                console.log(features[features.length - 1].id);
+                draw.changeMode("direct_select", {
+                    featureId: features[features.length - 1].id,
+                });
+            }
+        }
+
+        function updateArea(e) {
+            var data = draw.getAll();
+            var answer = document.getElementById("calculated-area");
+            if (data.features.length > 0) {
+                var area = turf.length(data, { units: "miles" });
+                // Restrict the area to 2 decimal points.
+                var rounded_area = Math.round(area * 5280.0 * 10) / 10;
+                answer.innerHTML =
+                    "<p><strong>" + rounded_area + "</strong></p><p>feet.</p>";
+            } else {
+                answer.innerHTML = "<p><strong>" + 0 + "</strong></p><p>feet.</p>";
+                if (e.type !== "draw.delete") alert("");
+            }
+        }
+
+        function lineButton() { draw.changeMode("draw_line_string"); }
+        function polygonButton() { draw.changeMode("draw_polygon"); }
+        function undoButton() { console.log('undo'); }
+        function deleteButton() {
+            const features = draw.getAll().features;
+            draw.delete(features[features.length - 1].id)
+            updateArea();
+        }
+        function resetZoom() {
+            if (map.getZoom() >= 15) {
+                map.zoomTo(19)
+            }
+        }
+console.log(draw);
+
+  
 
 
-      document.getElementById("geocoder").appendChild(geocoder.onAdd(map));
+
+        document.getElementById("geocoder").appendChild(geocoder.onAdd(map));
     </script>
-  </body>
+</body>
+
 </html>
