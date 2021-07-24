@@ -275,11 +275,12 @@
                 // Restrict the area to 2 decimal points.
                 var rounded_area = Math.round(area * 5280.0 * 10) / 10;
                 answer.innerHTML =
-                    "<p><strong>" + rounded_area + "</strong></p><p>feet.</p>";
+                "<p><strong>" + rounded_area + "</strong></p><p>feet.</p>";
             } else {
                 answer.innerHTML = "<p><strong>" + 0 + "</strong></p><p>feet.</p>";
-                if (e.type !== "draw.delete") alert("");
             }
+            map.dragPan._mousePan._enabled = false;
+            map.dragPan._touchPan._enabled = false;
         }
 
         function lineButton() { draw.changeMode("draw_line_string"); checkMode()}
@@ -297,7 +298,35 @@
         }
 console.log(draw);
 
-  
+ var ids = draw.set({
+  type: 'FeatureCollection',
+  features: [{
+    type: 'Feature',
+    properties: {},
+    id: featureId,
+    geometry: { type: 'Point', coordinates: [0, 0] }
+  }]
+}); 
+ 
+
+function undoButton(){ 
+   const features = draw.getAll().features;
+   const featureId = features[features.length - 1].id;
+   const coordinates = draw.get(featureId).geometry.coordinates;
+   const lastCoordinates = coordinates.pop();
+
+    if(coordinates.length !== 1){
+       draw.set({
+    type: 'FeatureCollection',
+    features: [{
+      type: 'Feature',
+      properties: {},
+      id: featureId,
+      geometry: { type: 'LineString', coordinates: coordinates }
+    }]
+   }); 
+   } else{deleteButton()}}
+
 
 
 
