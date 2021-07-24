@@ -8,6 +8,7 @@
     <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.3.1/mapbox-gl.css" rel="stylesheet" />
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.3.1/mapbox-gl.js"></script>
+    <script src="https://unpkg.com/mapbox-gl-draw-waypoint@1.0.3/dist/mapbox-gl-draw-waypoint.js"></script>
 </head>
 
 <body>
@@ -72,6 +73,7 @@
         });
 
         map.on('load', function() {
+             map.addControl(draw);
             console.log(map);
              map.dragPan._mousePan._enabled = false;
              map.dragPan._touchPan._enabled = false;
@@ -98,8 +100,14 @@
 
         geocoder.on('result', function () { document.getElementById("geocoder").style.display = "none" });
 
+
+        let modes = MapboxDraw.modes;
+        modes = MapboxDrawWaypoint.enable(modes, feature => feature.properties.risk);
+
         var draw = new MapboxDraw({
+            modes: modes,
             displayControlsDefault: false,
+            defaultMode: "draw_line_string",
             styles: [
     {
         "id": "gl-draw-line",
@@ -214,10 +222,9 @@
       }
     }
   ],
-            defaultMode: "draw_line_string",
-
         });
-        map.addControl(draw);
+
+        console.log(draw);
 
         map.on("draw.create", updateArea);
         map.on("draw.delete", updateArea);
