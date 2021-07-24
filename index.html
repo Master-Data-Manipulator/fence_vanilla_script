@@ -44,8 +44,8 @@
 
     <div class="bottom-bar">
         <button id="line-button" onclick="{lineButton()}">Line</button>
-        <button id="polygon-button" onclick="{polygonButton()}"">Polygon</button>
-      <button id=" undo-button" onclick="{undoButton()}">Undo</button>
+        <button id=" undo-button" onclick="{undoButton()}">Undo</button>
+        <button id="redo-button" onclick="{redoButton()}"">Redo</button>
         <button id="delete-button" onclick="{deleteButton()}">Delete</button>
     </div>
 
@@ -284,8 +284,6 @@
         }
 
         function lineButton() { draw.changeMode("draw_line_string"); checkMode()}
-        function polygonButton() { draw.changeMode("draw_polygon"); checkMode()}
-        function undoButton() { console.log('undo'); }
         function deleteButton() {
             const features = draw.getAll().features;
             draw.delete(features[features.length - 1].id)
@@ -296,18 +294,11 @@
                 map.zoomTo(19)
             }
         }
-console.log(draw);
 
- var ids = draw.set({
-  type: 'FeatureCollection',
-  features: [{
-    type: 'Feature',
-    properties: {},
-    id: featureId,
-    geometry: { type: 'Point', coordinates: [0, 0] }
-  }]
-}); 
  
+function redoButton(){ 
+
+}
 
 function undoButton(){ 
    const features = draw.getAll().features;
