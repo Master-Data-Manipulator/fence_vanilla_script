@@ -48,6 +48,13 @@ body {
   min-width: 50px;
 }
 
+#panZoomButton {
+  color: black;
+  z-index: 2;
+  min-width: 50px;
+  width: 160px;
+}
+
 p {
   font-family: "Open Sans";
   margin: 0;

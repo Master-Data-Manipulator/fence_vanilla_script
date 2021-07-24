@@ -19,11 +19,16 @@
         src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.min.js"></script>
     <link rel="stylesheet"
         href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.css" />
+
+
     <div class="button-container">
         <button type="button" id="editButton" onclick="{doneEdit()}">
             Done Editing
         </button>
-        <button type="button" id="zoomOutButton" onclick="{resetZoom()}">
+        <button type="button" id="panZoomButton" onclick="{pan_zoom()}">
+            Enable Pan/Zoom
+        </button>
+         <button type="button" id="zoomOutButton" onclick="{resetZoom()}">
             Reset Zoom
         </button>
     </div>
@@ -46,15 +51,19 @@
 
     <script id="script">
         var editButton = document.querySelector("#editButton");
+        var panZoomButton = document.querySelector("#panZoomButton");
         //   var lineButton = document.querySelector("#lineButton");
         //   var polygonButton = document.querySelector("#polygonButton");
         //   var undoButton = document.querySelector("#undoButton");
         //   var deleteButton = document.querySelector("#deleteButton");
         var last = [];
         var isEditing = true;
+        var isPanZoom = false;
 
         mapboxgl.accessToken =
             "pk.eyJ1IjoidXNlcjIxMjEiLCJhIjoiY2tyMnpsczNlMWNhdjJ3bGRxM3lwNThkZiJ9.tpdGQruKyjF2go3gsXvHxA";
+
+
         var map = new mapboxgl.Map({
             container: "map", // container ID
             style: "mapbox://styles/mapbox/satellite-v9", // style URL
@@ -62,6 +71,11 @@
             zoom: 12, // starting zoom
         });
 
+        map.on('load', function() {
+             map.dragPan._mousePan._enabled = false;
+             map.dragPan._touchPan._enabled = false;
+        })
+    
 
         const geocoder = new MapboxGeocoder({
             accessToken: mapboxgl.accessToken,
@@ -188,11 +202,8 @@
       }
     }
   ],
-
-            // Select which mapbox-gl-draw control buttons to add to the map.
-            // Set mapbox-gl-draw to draw by default.
-            // The user does not have to click the polygon control button first.
             defaultMode: "draw_line_string",
+
         });
         map.addControl(draw);
 
@@ -202,16 +213,40 @@
 
         map.on('click', checkMode);
         
+
+        function pan_zoom(){ 
+            isPanZoom = !isPanZoom;
+            if(isPanZoom){
+            panZoomButton.innerHTML = "Disable Pan/Zoom";
+            map.dragPan._mousePan._enabled = true;
+            map.dragPan._touchPan._enabled = true;
+            } else{
+            panZoomButton.innerHTML = "Enable Pan/Zoom";
+            map.dragPan._mousePan._enabled = false;
+            map.dragPan._touchPan._enabled = false;
+            }
+        }
         
         function checkMode(){ 
+
          const mode = draw.getMode();
-         if(mode == 'simple_select'){
-             isEditing = false;
-              editButton.innerHTML = "Edit";
-         } else{
-             isEditing = true;
-             editButton.innerHTML = "Done Editing";
-         }
+
+            switch (mode) {
+                case 'simple_select':
+                     isEditing = false;
+                     editButton.innerHTML = "Edit";
+                break;
+
+                case 'draw_line_string':
+                     isEditing = false;
+                     editButton.innerHTML = "Done Draw";
+                break;
+            
+                default:
+                     isEditing = true;
+                     editButton.innerHTML = "Done Editing";
+                break;
+            }
         }
 
         function doneEdit(e) {
@@ -232,7 +267,7 @@
             }
         }
 
-        function updateArea(e) {
+        function updateArea() {
             var data = draw.getAll();
             var answer = document.getElementById("calculated-area");
             if (data.features.length > 0) {
