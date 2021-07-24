@@ -72,8 +72,12 @@
         });
 
         map.on('load', function() {
+            console.log(map);
              map.dragPan._mousePan._enabled = false;
              map.dragPan._touchPan._enabled = false;
+             map.dragRotate._mouseRotate._enabled = false;
+             map.touchZoomRotate._enabled = false;
+
         })
     
 
